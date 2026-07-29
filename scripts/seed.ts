@@ -3,7 +3,8 @@
  *
  *   npm run seed                     # idempotent — safe to run over an existing database
  *   npm run seed -- --reset          # drop every app collection first, then seed
- *   npm run seed -- --no-accounts    # games only; skip the two demo logins
+ *   npm run seed -- --no-accounts    # games only; skip both demo logins
+ *   npm run seed -- --no-player      # games + the admin; skip the demo player
  *
  * Writes a super-admin, a test player, the ten games with their market
  * templates and cards, and one tournament + match + markets per game, so a
@@ -56,9 +57,14 @@ import { SEED_GAMES, type SeedGame } from "./seed-data";
  * Accounts
  * ------------------------------------------------------------------ */
 
+/**
+ * Both halves are overridable, not just the password: a deployed database wants
+ * an operator's own address here, and hardcoding one into a public repository
+ * is the thing `SEED_ADMIN_PASSWORD` already exists to avoid.
+ */
 const ADMIN = {
-  email: "admin@buggedout.com",
-  username: "admin",
+  email: process.env.SEED_ADMIN_EMAIL ?? "admin@buggedout.com",
+  username: process.env.SEED_ADMIN_USERNAME ?? "admin",
   password: process.env.SEED_ADMIN_PASSWORD ?? "BuggedOut!2026",
 };
 
@@ -147,8 +153,9 @@ async function main(): Promise<void> {
 
   const withAccounts = !flags.has("--no-accounts");
   const admin = withAccounts ? await seedAdmin() : null;
-  const player = withAccounts ? await seedPlayer() : null;
+  const player = withAccounts && !flags.has("--no-player") ? await seedPlayer() : null;
   if (!withAccounts) log("--no-accounts: skipped the demo admin and player");
+  else if (!player) log("--no-player: skipped the demo player");
   await getReferralSetting(); // materialises the singleton with its defaults
 
   let categories = 0;
@@ -176,15 +183,17 @@ async function main(): Promise<void> {
 
   log("");
   log(`games ${categories} · teams ${teams} · tournaments ${tournaments} · matches ${matches} · markets ${questions}`);
-  if (!admin || !player) return;
+  if (!admin && !player) return;
 
   log("");
   log("Sign in with:");
-  log(`  admin   ${ADMIN.email}  /  ${ADMIN.password}   (superadmin → /admin)`);
-  log(`  player  ${PLAYER.email}  /  ${PLAYER.password}   (${player.coinBalance.toLocaleString()} coins)`);
-  log(`  referral code: ${player.referralCode}`);
+  if (admin) log(`  admin   ${ADMIN.email}  /  ${ADMIN.password}   (superadmin → /admin)`);
+  if (player) {
+    log(`  player  ${PLAYER.email}  /  ${PLAYER.password}   (${player.coinBalance.toLocaleString()} coins)`);
+    log(`  referral code: ${player.referralCode}`);
+  }
   log("");
-  log(`admin id ${admin._id.toString()}`);
+  if (admin) log(`admin id ${admin._id.toString()}`);
 }
 
 /**

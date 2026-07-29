@@ -22,6 +22,7 @@ import {
   rateLimit,
 } from "@/lib/rate-limit";
 import { creditReferralSignupRewards } from "@/lib/referral";
+import { canAccessAdminPanel } from "@/lib/roles";
 import { getBaseUrl } from "@/lib/url";
 import { creditSignupBonus } from "@/lib/wallet";
 import { User, type IUser } from "@/models";
@@ -224,7 +225,7 @@ export async function loginAction(_prevState: FormState, formData: FormData): Pr
 
   clearRateLimit(limitKey);
 
-  redirect(safeCallbackUrl(formData.get("callbackUrl")));
+  redirect(await postLoginDestination(identifier, formData.get("callbackUrl")));
 }
 
 export async function logoutAction(): Promise<void> {
@@ -384,4 +385,43 @@ function safeCallbackUrl(value: FormDataEntryValue | null): string {
   if (typeof value !== "string") return "/";
   if (!value.startsWith("/") || value.startsWith("//")) return "/";
   return value;
+}
+
+/**
+ * Where a fresh session lands.
+ *
+ * An explicit `callbackUrl` always wins: the proxy only sets one when it has
+ * just bounced someone off the page they actually asked for, and sending them
+ * somewhere else instead would lose it. With no such hint, staff open on the
+ * admin panel and everyone else on the lobby — nothing in the player UI links
+ * to `/admin`, so an operator would otherwise have to type the URL every time.
+ *
+ * The role is re-read rather than taken from `auth()`: the session cookie
+ * `signIn` just wrote is on the *response*, and is not readable until the
+ * request after this one.
+ */
+async function postLoginDestination(
+  identifier: string,
+  callbackUrl: FormDataEntryValue | null,
+): Promise<string> {
+  const requested = safeCallbackUrl(callbackUrl);
+  if (requested !== "/") return requested;
+
+  try {
+    await connectDB();
+
+    // The same either/or `authorize()` uses — a username cannot contain "@".
+    const query = identifier.includes("@")
+      ? { email: identifier.toLowerCase() }
+      : { username: identifier };
+
+    const user = await User.findOne(query).select("role").lean<Pick<IUser, "role">>();
+
+    return canAccessAdminPanel(user?.role) ? "/admin" : "/";
+  } catch (error) {
+    // A signed-in user landing on the lobby is a far better failure than a
+    // signed-in user seeing an error page.
+    console.error("[login] could not resolve landing page", error);
+    return "/";
+  }
 }
