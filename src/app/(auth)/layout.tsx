@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { siteAsset } from "@/lib/site-assets";
+
 /**
  * Login / signup / password reset (Phase 3), now with the key art on top (8.1).
  *
@@ -14,7 +16,7 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm space-y-7">
         <Image
-          src="/logo.webp"
+          src={siteAsset("logo")}
           alt="BuggedOut"
           width={958}
           height={518}

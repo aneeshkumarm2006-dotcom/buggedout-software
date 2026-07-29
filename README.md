@@ -58,8 +58,61 @@ throws with a list of what is missing rather than failing later at a query.
 | `SIGNUP_BONUS_COINS` | no (1000) | Credited once, immediately after signup. |
 | `DAILY_BONUS_COINS` | no (100) | Claimable once per 24 hours. `0` switches the bonus off. |
 | `CRON_SECRET` | production | Guards `/api/cron/*`. With none set the route answers only outside production. |
+| `CLOUDINARY_CLOUD_NAME` | no | Image storage. All three or none — half-configured fails at startup. |
+| `CLOUDINARY_API_KEY` | no | ↑ |
+| `CLOUDINARY_API_SECRET` | no | ↑ |
+| `CLOUDINARY_FOLDER` | no (`buggedout`) | Root folder every upload nests under. |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | no | Same value as `CLOUDINARY_CLOUD_NAME`. Not a secret. |
+| `NEXT_PUBLIC_CLOUDINARY_FOLDER` | no (`buggedout`) | Same value as `CLOUDINARY_FOLDER`. Not a secret. |
 | `SEED_ADMIN_PASSWORD` | no | Seed only. |
 | `SEED_PLAYER_PASSWORD` | no | Seed only. |
+
+Both `NEXT_PUBLIC_` copies exist because the browser has to build URLs the server never sends it:
+the upload field picks a resize target from whether cloud storage is on, and `lib/site-assets.ts`
+names chrome URLs without a database lookup. Startup fails if a copy disagrees with its original.
+
+### Asset storage
+
+Everything the app serves goes through `src/lib/storage/`, and nothing outside it knows which
+provider answered:
+
+- **Cloudinary** when the three credentials are set. Delivery URLs carry their transformation, so
+  the CDN does the resizing and the AVIF/WebP negotiation and `AssetImage` needs no optimiser.
+- **Inline data URLs** when they are not — the image rides along on the document. Fine for a 64×64
+  crest, refused for a 16:9 game card, which is why that one needs real storage.
+
+Swapping in S3 or UploadThing is a new file implementing `StorageProvider` plus a branch in
+`src/lib/storage/index.ts`. No call site changes.
+
+**Uploads** (`POST /api/uploads`) are named by a **preset** — `team-crest`, `game-card`, `avatar`
+in `src/lib/storage/shared.ts`. A preset decides the crop, the folder and the permission required,
+so adding an image field to a screen means naming one, not writing another upload path.
+
+**Site chrome** — logo, win banner, empty-state icons, the marble wash — is named in
+`src/lib/site-assets.ts` instead, because it ships with the app rather than being managed through
+the panel. `siteAsset("logo")` returns a CDN URL when Cloudinary is configured and the `public/`
+path when it is not, so where chrome is served from is one decision in one place. The files stay in
+`public/` as that fallback.
+
+Replacing or deleting an asset hands the old one back to the provider, so the account doesn't
+collect a crest for every edit ever made. Uploading and then *abandoning* a form does leave an
+orphan — the file is stored the moment it is picked, which is what makes the preview instant.
+
+### Migrating existing assets
+
+`npm run migrate:assets` moves everything the app already had onto the configured provider: game
+cards and hover videos out of `public/`, team crests and avatars out of the inline data URLs they
+were stored as, and the site chrome.
+
+```bash
+npm run migrate:assets              # dry run — prints the plan, writes nothing
+npm run migrate:assets -- --commit
+```
+
+Safe to re-run. Every upload gets a deterministic public ID derived from the row it belongs to
+(`buggedout/games/lane-races`) with `overwrite`, so a second run replaces its own output instead of
+duplicating it, and anything already pointing at the provider is skipped — a half-finished run
+resumes rather than starting over. Source files under `public/` are never deleted.
 
 ---
 
@@ -73,6 +126,7 @@ throws with a list of what is missing rather than failing later at a query.
 | `npm run lint` | ESLint. The repo is kept at zero warnings. |
 | `npm test` | Vitest, once. |
 | `npm run test:watch` | Vitest, watching. |
+| `npm run migrate:assets` | Move existing assets to the storage provider. Dry run; add `-- --commit` to write. |
 | `npm run seed` | Seed the database. Safe to re-run. |
 | `npm run seed -- --reset` | Drop every collection first. Refuses to run with `NODE_ENV=production` unless `--force` is passed too. |
 

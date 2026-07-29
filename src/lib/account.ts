@@ -5,6 +5,7 @@ import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { env } from "@/lib/env";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { discardReplacedAsset } from "@/lib/storage";
 import { nextDailyBonusAt } from "@/lib/wallet";
 import { User, type IUser } from "@/models";
 import type { UpdateProfileInput } from "@/schemas/user";
@@ -95,9 +96,21 @@ export async function updateProfile(
   if (Object.keys(changes).length === 0) return { ok: true };
 
   try {
-    const updated = await User.updateOne({ _id: toObjectId(userId) }, { $set: changes });
-    if (updated.matchedCount === 0) {
-      return { ok: false, message: "That account no longer exists." };
+    const previous = await User.findOneAndUpdate(
+      { _id: toObjectId(userId) },
+      { $set: changes },
+      // Explicit rather than relying on Mongoose's default, because the whole
+      // point of this read is the avatar as it was a moment ago.
+      { returnDocument: "before" },
+    )
+      .select("avatar")
+      .lean<Pick<IUser, "_id" | "avatar">>();
+
+    if (!previous) return { ok: false, message: "That account no longer exists." };
+
+    // The picture they just replaced is no longer referenced by anything.
+    if (changes.avatar !== undefined) {
+      await discardReplacedAsset(previous.avatar, changes.avatar);
     }
   } catch (error) {
     // The unique index is the real check — a pre-read would still race.

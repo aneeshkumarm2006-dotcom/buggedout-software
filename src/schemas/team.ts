@@ -7,7 +7,8 @@ import { imagePath, selectedObjectId } from "@/schemas/common";
 const baseTeamSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
   categoryId: selectedObjectId,
-  // Already resized to 64×64 client-side (Phase 6.6) — this only checks the shape.
+  // Already cropped in the browser and stored by `lib/storage` — this only
+  // checks the shape of the reference that came back.
   image: imagePath,
   status: z.enum(CONTENT_STATUSES),
 });

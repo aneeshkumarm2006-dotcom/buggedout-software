@@ -2,20 +2,22 @@ import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { InboxIcon } from "lucide-react";
 
+import { siteAsset, type SiteAssetName } from "@/lib/site-assets";
 import { cn } from "@/lib/utils";
 
 /**
  * The four neon line icons in the brand delivery, and where each one belongs
  * (8.4). Named rather than passed as raw paths so a renamed file is a type
  * error here instead of a silently broken image on a screen nobody visits
- * often — an empty state is, by definition, the rare case.
+ * often — an empty state is, by definition, the rare case. `satisfies` is what
+ * keeps that true now the paths themselves live in `site-assets.ts`.
  */
 export const EMPTY_ART = {
-  games: "/icons/tv.webp",
-  bets: "/icons/clipboard.webp",
-  leaderboard: "/icons/trophy.webp",
-  referrals: "/icons/crown.webp",
-} as const;
+  games: "icons/tv",
+  bets: "icons/clipboard",
+  leaderboard: "icons/trophy",
+  referrals: "icons/crown",
+} as const satisfies Record<string, SiteAssetName>;
 
 /**
  * The "No data" state every list in Phase 5 falls back to (5.12).
@@ -53,7 +55,13 @@ export function EmptyState({
       {art ? (
         // Already a line drawing on nothing, so it needs no plate behind it —
         // and it carries its own brand colour, which the Lucide glyph does not.
-        <Image src={art} alt="" width={256} height={256} className="size-16 opacity-90" />
+        <Image
+          src={siteAsset(art)}
+          alt=""
+          width={256}
+          height={256}
+          className="size-16 opacity-90"
+        />
       ) : (
         <span className="bg-muted/60 text-muted-foreground flex size-11 items-center justify-center rounded-full">
           <Icon className="size-5" />

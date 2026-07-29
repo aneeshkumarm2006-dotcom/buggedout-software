@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { siteAsset } from "@/lib/site-assets";
 import { cn } from "@/lib/utils";
 
 /**
@@ -30,7 +31,7 @@ export function BrandMark({
       className={cn("touch-target inline-flex items-center", className)}
     >
       <Image
-        src="/letter-logo.webp"
+        src={siteAsset("letterLogo")}
         alt="BuggedOut"
         width={900}
         height={146}

@@ -3,6 +3,7 @@ import { Archivo, Inter } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { DeferredToaster } from "@/components/ui/deferred-toaster";
+import { siteAsset } from "@/lib/site-assets";
 
 import "./globals.css";
 
@@ -32,17 +33,20 @@ const archivo = Archivo({
 const DESCRIPTION = "Bet free virtual coins on live real-world animal events.";
 
 /**
- * `metadataBase` is what turns the relative `/og-image.jpg` below into the
- * absolute URL a link preview needs (8.1). It has to be known at build time and
- * cannot come from the request, so: the deploy's own env var, then the
- * production domain. Vercel sets `VERCEL_PROJECT_PRODUCTION_URL` to the bare
- * host, without a scheme.
+ * `metadataBase` is what turns a relative asset path into the absolute URL a
+ * link preview needs (8.1). It has to be known at build time and cannot come
+ * from the request, so: the deploy's own env var, then the production domain.
+ * Vercel sets `VERCEL_PROJECT_PRODUCTION_URL` to the bare host, without a
+ * scheme. `siteAsset` may now return an already-absolute CDN URL, which
+ * `metadataBase` correctly leaves alone.
  */
 const siteUrl =
   process.env.AUTH_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : "https://buggedout.com");
+
+const ogImage = siteAsset("ogImage");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -59,13 +63,13 @@ export const metadata: Metadata = {
     title: "BuggedOut",
     description: DESCRIPTION,
     url: "/",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "BuggedOut" }],
+    images: [{ url: ogImage, width: 1200, height: 630, alt: "BuggedOut" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "BuggedOut",
     description: DESCRIPTION,
-    images: ["/og-image.jpg"],
+    images: [ogImage],
   },
 };
 
@@ -88,6 +92,11 @@ export default function RootLayout({
       lang="en"
       // `dark` is set here too so the first paint is dark before next-themes hydrates.
       className={`dark ${inter.variable} ${archivo.variable} h-full antialiased`}
+      // The marble wash in `globals.css` is a stylesheet rule, and a stylesheet
+      // cannot ask `site-assets.ts` where the file went. Handing it down as a
+      // custom property keeps that one decision in one place like every other
+      // asset, rather than leaving a hardcoded path in the CSS.
+      style={{ "--bg-marble": `url("${siteAsset("bgMarble")}")` } as React.CSSProperties}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

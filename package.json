@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "seed": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/seed.ts",
+    "migrate:assets": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/migrate-assets.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

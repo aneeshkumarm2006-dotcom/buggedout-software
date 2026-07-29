@@ -17,13 +17,20 @@ import {
 } from "@/lib/admin/shared";
 import { connectDB } from "@/lib/db";
 import type { ContentStatus } from "@/lib/enums";
+import { discardAsset, discardReplacedAsset } from "@/lib/storage";
 import { GameCategory, Match, Team, type IGameCategory, type ITeam } from "@/models";
 import type { CreateTeamInput, UpdateTeamInput } from "@/schemas/team";
 
 /**
  * Teams, admin side (Phase 6.6). A team is a competitor in one game — turtle A,
- * lane 3, door 2 — and its 64×64 image is resized in the browser before it ever
- * reaches here, so `image` is only ever validated for shape.
+ * lane 3, door 2 — and its crest is cropped in the browser and stored by
+ * `lib/storage` before it ever reaches here, so `image` is only ever validated
+ * for shape.
+ *
+ * Replacing or deleting a crest hands the old one back to the storage provider.
+ * That is a no-op for a `/public` path or an inline data URL, and on Cloudinary
+ * it is the difference between an account that stays tidy and one that keeps a
+ * copy of every edit anybody ever made.
  */
 export type TeamRow = {
   id: string;
@@ -179,12 +186,16 @@ export async function updateTeam(
     const updated = await Team.findByIdAndUpdate(
       toObjectId(id),
       { $set: input },
-      { returnDocument: "after", runValidators: true },
+      // `before`, so the crest that was just replaced is still readable — the
+      // caller only needs the new name, which it is holding in `input` anyway.
+      { returnDocument: "before", runValidators: true },
     ).lean<ITeam>();
 
     if (!updated) return { ok: false, message: "That team no longer exists." };
 
-    return { ok: true, data: { id: updated._id.toString(), name: updated.name } };
+    await discardReplacedAsset(updated.image, input.image);
+
+    return { ok: true, data: { id: updated._id.toString(), name: input.name ?? updated.name } };
   } catch (error) {
     return teamWriteFailure(error);
   }
@@ -197,7 +208,10 @@ export async function deleteTeam(id: string): Promise<MutationResult<{ name: str
 
   const teamId = toObjectId(id);
 
-  const team = await Team.findById(teamId).select("name").lean<Pick<ITeam, "_id" | "name">>();
+  const team = await Team.findById(teamId)
+    .select("name image")
+    .lean<Pick<ITeam, "_id" | "name" | "image">>();
+
   if (!team) return { ok: false, message: "That team no longer exists." };
 
   const matches = await Match.countDocuments({ teamIds: teamId });
@@ -210,6 +224,7 @@ export async function deleteTeam(id: string): Promise<MutationResult<{ name: str
   }
 
   await Team.deleteOne({ _id: teamId });
+  await discardAsset(team.image);
 
   return { ok: true, data: { name: team.name } };
 }

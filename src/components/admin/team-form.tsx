@@ -11,13 +11,13 @@ import {
   TextField,
   useFormToast,
 } from "@/components/admin/form-parts";
-import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { ImageUploadField } from "@/components/common/image-upload-field";
 import type { CategoryOption } from "@/lib/admin/categories";
 import type { TeamDetail } from "@/lib/admin/teams";
-import { CONTENT_STATUSES, TEAM_IMAGE_SIZE } from "@/lib/enums";
+import { CONTENT_STATUSES } from "@/lib/enums";
 import { fieldError, idleFormState, type FormState } from "@/lib/form";
 
-/** Create/edit a team (Phase 6.6). The crest is resized client-side to 64×64. */
+/** Create/edit a team (Phase 6.6). The crest is cropped in the browser, then stored by `lib/storage`. */
 export function TeamForm({
   action,
   categories,
@@ -67,7 +67,7 @@ export function TeamForm({
         <ImageUploadField
           label="Crest"
           name="image"
-          size={TEAM_IMAGE_SIZE}
+          preset="team-crest"
           // A data URL isn't echoed back on a rejected submit, so the stored
           // image is the fallback and the uploader keeps any new pick itself.
           defaultValue={state.values?.image || team?.image || ""}

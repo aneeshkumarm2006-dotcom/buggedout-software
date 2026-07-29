@@ -17,6 +17,7 @@ import {
 } from "@/lib/admin/shared";
 import { connectDB } from "@/lib/db";
 import type { ContentStatus } from "@/lib/enums";
+import { discardAsset, discardReplacedAsset } from "@/lib/storage";
 import { GameCategory, Match, Team, Tournament, type IGameCategory } from "@/models";
 import type { CreateGameCategoryInput, UpdateGameCategoryInput } from "@/schemas/game-category";
 
@@ -204,13 +205,22 @@ export async function updateCategory(
     const updated = await GameCategory.findByIdAndUpdate(
       toObjectId(id),
       { $set: input },
-      // Mongoose skips schema validators on an update unless asked.
-      { returnDocument: "after", runValidators: true },
+      // Mongoose skips schema validators on an update unless asked. `before`,
+      // so the artwork that was just replaced is still readable — the caller
+      // only wants the new title, which `input` is already carrying.
+      { returnDocument: "before", runValidators: true },
     ).lean<IGameCategory>();
 
     if (!updated) return { ok: false, message: "That game no longer exists." };
 
-    return { ok: true, data: { id: updated._id.toString(), title: updated.title } };
+    // The hover video too — after `migrate:assets` it is the largest single
+    // asset the account holds, so leaving one behind per edit adds up fastest.
+    await Promise.all([
+      discardReplacedAsset(updated.cardImage, input.cardImage),
+      discardReplacedAsset(updated.animatedCard, input.animatedCard),
+    ]);
+
+    return { ok: true, data: { id: updated._id.toString(), title: input.title ?? updated.title } };
   } catch (error) {
     return categoryWriteFailure(error);
   }
@@ -229,8 +239,8 @@ export async function deleteCategory(id: string): Promise<MutationResult<{ title
 
   const categoryId = toObjectId(id);
 
-  const category = await GameCategory.findById(categoryId).select("title").lean<
-    Pick<IGameCategory, "_id" | "title">
+  const category = await GameCategory.findById(categoryId).select("title cardImage animatedCard").lean<
+    Pick<IGameCategory, "_id" | "title" | "cardImage" | "animatedCard">
   >();
 
   if (!category) return { ok: false, message: "That game no longer exists." };
@@ -255,6 +265,7 @@ export async function deleteCategory(id: string): Promise<MutationResult<{ title
   }
 
   await GameCategory.deleteOne({ _id: categoryId });
+  await Promise.all([discardAsset(category.cardImage), discardAsset(category.animatedCard)]);
 
   return { ok: true, data: { title: category.title } };
 }

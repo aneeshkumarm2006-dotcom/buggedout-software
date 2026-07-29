@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { RecentWin } from "@/lib/bet-history";
 import { formatCoins } from "@/lib/format";
+import { siteAsset } from "@/lib/site-assets";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -117,7 +118,7 @@ export function WinCelebration({ wins }: { wins: RecentWin[] }) {
             </div>
 
             <Image
-              src="/hud-winner.webp"
+              src={siteAsset("hudWinner")}
               alt=""
               width={1400}
               height={781}

@@ -64,16 +64,46 @@ export const slug = z
   .max(60)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers and single hyphens");
 
-/** Local path (`/game-cards/roulette.webp`) or absolute URL. */
+/**
+ * Local path (`/game-cards/roulette.webp`), absolute URL, or an inline data URL
+ * from the uploader when no cloud storage is configured (`lib/storage/`).
+ *
+ * The ceiling has to be split by shape: a path or a CDN URL that runs past 500
+ * characters is a mistake, while a data URL is *supposed* to be tens of
+ * thousands. A single `.max(500)` here quietly rejected every inline upload.
+ */
+const MAX_REFERENCE_CHARS = 500;
+
+/** ~48 KB of image data, base64'd and rounded up — the inline preset ceiling. */
+const MAX_DATA_URL_CHARS = 70_000;
+
 export const imagePath = z
   .string()
   .trim()
   .min(1, "An image is required")
-  .max(500)
-  .refine(
-    (value) => value.startsWith("/") || /^https?:\/\//.test(value) || value.startsWith("data:image/"),
-    "Must be a site path, an http(s) URL, or a data URL",
-  );
+  .superRefine((value, ctx) => {
+    const isData = value.startsWith("data:image/");
+
+    if (!isData && !value.startsWith("/") && !/^https?:\/\//.test(value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Must be a site path, an http(s) URL, or an uploaded image",
+      });
+      return;
+    }
+
+    if (isData && value.length > MAX_DATA_URL_CHARS) {
+      ctx.addIssue({
+        code: "custom",
+        message: "That image is too large to store inline — configure Cloudinary (see .env.example)",
+      });
+      return;
+    }
+
+    if (!isData && value.length > MAX_REFERENCE_CHARS) {
+      ctx.addIssue({ code: "custom", message: `Must be at most ${MAX_REFERENCE_CHARS} characters` });
+    }
+  });
 
 export const optionalImagePath = z
   .preprocess(blankToNull, imagePath.nullish())

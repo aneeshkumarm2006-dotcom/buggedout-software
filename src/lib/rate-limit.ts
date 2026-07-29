@@ -63,6 +63,16 @@ export const BETTING_RATE_LIMITS = {
   placeBets: { limit: 30, windowMs: MINUTE },
 } as const satisfies Record<string, RateLimitRule>;
 
+/**
+ * Image uploads. Bucketed per user — every caller is signed in, and one admin
+ * working through a squad of crests shouldn't throttle another. Generous enough
+ * for that, tight enough that a stolen session can't be used to fill the
+ * Cloudinary account.
+ */
+export const UPLOAD_RATE_LIMITS = {
+  image: { limit: 40, windowMs: 5 * MINUTE },
+} as const satisfies Record<string, RateLimitRule>;
+
 export function rateLimit(key: string, rule: RateLimitRule): RateLimitResult {
   const now = Date.now();
 

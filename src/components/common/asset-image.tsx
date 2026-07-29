@@ -6,12 +6,16 @@ import { cn } from "@/lib/utils";
 /**
  * Game cards and team crests (5.2–5.4).
  *
- * `GameCategory.cardImage` and `Team.image` accept three shapes — a site path,
- * an absolute URL, or a data URL (the 6.6 uploader resizes to 64×64 in the
- * browser). `next/image` only handles the first without configuration and
- * throws on the third, so only local paths take the optimiser; anything else
- * falls back to a plain tag rather than breaking the page. Once Phase 8 has
- * copied the real assets into `public/`, that is every image on the lobby.
+ * `GameCategory.cardImage`, `Team.image` and `User.avatar` accept three shapes —
+ * a site path, an absolute URL, or a data URL. `next/image` only handles the
+ * first without configuration and throws on the third, so only local paths take
+ * the optimiser; anything else falls back to a plain tag rather than breaking
+ * the page.
+ *
+ * A Cloudinary URL stays on that plain-tag path deliberately, not by accident:
+ * `lib/storage/cloudinary.ts` bakes `c_fill,w_,h_,f_auto,q_auto` into the URL,
+ * so the CDN already sends an exactly-sized AVIF. Re-optimising that through
+ * `next/image` would pay for the same work twice and spend Vercel's quota on it.
  *
  * `eager` is what used to be `priority` (9.5). Next 16 deprecated that prop and
  * it now emits no hint at all, which is how the first lobby tile — the LCP

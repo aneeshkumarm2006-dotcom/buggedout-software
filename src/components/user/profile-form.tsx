@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { updateProfileAction } from "@/app/(user)/actions";
 import { FormAlert, SubmitButton, TextField } from "@/components/auth/form-parts";
+import { ImageUploadField } from "@/components/common/image-upload-field";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fieldError, idleFormState } from "@/lib/form";
 import { initials } from "@/lib/format";
@@ -11,10 +12,10 @@ import { initials } from "@/lib/format";
 /**
  * Username and avatar (Phase 5.11).
  *
- * The avatar is a URL rather than an upload: there is no file storage in the
- * MVP, and the 64×64 client-side resizer arrives with the admin team uploader
- * in 6.6. `updateProfileSchema` accepts a site path, an http(s) URL or a data
- * URL, so this field is forward-compatible with whichever that turns out to be.
+ * The avatar used to be a URL field, because there was nowhere to put a file.
+ * It now shares `ImageUploadField` with the admin panel — the `avatar` preset is
+ * the one that needs no permission beyond being signed in, so a player uploads
+ * through the same endpoint an admin uses for crests.
  */
 export function ProfileForm({
   username,
@@ -58,17 +59,14 @@ export function ProfileForm({
         hint="3–20 characters. Letters, numbers and underscores."
       />
 
-      <TextField
-        label="Avatar URL"
+      <ImageUploadField
+        label="Picture"
         name="avatar"
-        type="url"
-        inputMode="url"
-        autoComplete="off"
-        spellCheck={false}
-        placeholder="https://…"
+        preset="avatar"
+        placeholder="https://… — or upload"
         defaultValue={currentAvatar}
         error={fieldError(state, "avatar")}
-        hint="Optional. Leave blank to go back to your initials."
+        hint="Optional. Clear it to go back to your initials."
       />
 
       <SubmitButton pending={pending} pendingLabel="Saving…">

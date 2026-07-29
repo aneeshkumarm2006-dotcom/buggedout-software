@@ -12,7 +12,7 @@ import {
   TextField,
   useFormToast,
 } from "@/components/admin/form-parts";
-import { AssetImage } from "@/components/common/asset-image";
+import { ImageUploadField } from "@/components/common/image-upload-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,34 +116,26 @@ export function CategoryForm({
         </FieldRow>
       </FormCard>
 
-      <FormCard title="Artwork" description="Paths under /public, or absolute URLs.">
-        <div className="flex items-start gap-4">
-          {/* 16:9, matching the lobby tile — the preview is only useful if it
-              crops the way the real card will (8.2). */}
-          <div className="bg-muted ring-foreground/10 relative aspect-video w-36 shrink-0 overflow-hidden rounded-lg ring-1">
-            <AssetImage src={cardImage || null} alt="" fill className="object-cover" />
-          </div>
+      <FormCard title="Artwork" description="Upload a card, or point at a path under /public.">
+        {/* 16:9, matching the lobby tile — the uploader's own preview crops the
+            way the real card will (8.2). */}
+        <ImageUploadField
+          label="Card image"
+          name="cardImage"
+          preset="game-card"
+          defaultValue={cardImage}
+          error={fieldError(state, "cardImage")}
+          placeholder="/game-cards/lane-races.webp"
+        />
 
-          <div className="grid flex-1 gap-4">
-            <TextField
-              label="Card image"
-              name="cardImage"
-              required
-              defaultValue={cardImage}
-              error={fieldError(state, "cardImage")}
-              placeholder="/game-cards/lane-races.webp"
-            />
-
-            <TextField
-              label="Animated card"
-              name="animatedCard"
-              defaultValue={state.values?.animatedCard ?? category?.animatedCard ?? ""}
-              error={fieldError(state, "animatedCard")}
-              placeholder="/game-cards/lane-races.mp4"
-              hint="Optional. Played on desktop hover."
-            />
-          </div>
-        </div>
+        <TextField
+          label="Animated card"
+          name="animatedCard"
+          defaultValue={state.values?.animatedCard ?? category?.animatedCard ?? ""}
+          error={fieldError(state, "animatedCard")}
+          placeholder="/game-cards/lane-races.mp4"
+          hint="Optional. Played on desktop hover — video, so it isn't uploaded here."
+        />
       </FormCard>
 
       <FormCard
