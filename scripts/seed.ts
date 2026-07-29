@@ -1,12 +1,18 @@
 /**
  * Database seed (Phase 9.1).
  *
- *   npm run seed              # idempotent — safe to run over an existing database
- *   npm run seed -- --reset   # drop every app collection first, then seed
+ *   npm run seed                     # idempotent — safe to run over an existing database
+ *   npm run seed -- --reset          # drop every app collection first, then seed
+ *   npm run seed -- --no-accounts    # games only; skip the two demo logins
  *
  * Writes a super-admin, a test player, the ten games with their market
  * templates and cards, and one tournament + match + markets per game, so a
  * fresh clone has something to log into and bet on.
+ *
+ * `--no-accounts` is for a *deployed* database, where the demo logins are a
+ * liability rather than a convenience: their passwords default to the constants
+ * below, which are in the repository. The game content needs no account behind
+ * it, so it seeds identically either way.
  *
  * Idempotency is by natural key — email, slug, `(category, name)`,
  * `(match, question text)`. Content that is safe to refresh (titles, card
@@ -139,8 +145,10 @@ async function main(): Promise<void> {
 
   if (flags.has("--reset")) await resetDatabase(flags.has("--force"));
 
-  const admin = await seedAdmin();
-  const player = await seedPlayer();
+  const withAccounts = !flags.has("--no-accounts");
+  const admin = withAccounts ? await seedAdmin() : null;
+  const player = withAccounts ? await seedPlayer() : null;
+  if (!withAccounts) log("--no-accounts: skipped the demo admin and player");
   await getReferralSetting(); // materialises the singleton with its defaults
 
   let categories = 0;
@@ -168,6 +176,8 @@ async function main(): Promise<void> {
 
   log("");
   log(`games ${categories} · teams ${teams} · tournaments ${tournaments} · matches ${matches} · markets ${questions}`);
+  if (!admin || !player) return;
+
   log("");
   log("Sign in with:");
   log(`  admin   ${ADMIN.email}  /  ${ADMIN.password}   (superadmin → /admin)`);
