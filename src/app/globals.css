@@ -1,0 +1,366 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * BuggedOut theme (Phase 7.1–7.2).
+ *
+ * The palette is sampled from the brand assets rather than invented: every
+ * surface below is the near-black *green* the key art actually sits on
+ * (`hero-horizontal.webp` runs #030906 → #15332c), and the three accents are
+ * the HUD's own — the cyan frame line (#1ddee1), the gold one (#f5b829) and the
+ * red glow (#ff2c0b) — alongside the logotype's yellow-lime (#ddd403). Primary
+ * is the neon green the TODO fixes at ~#00e701, which is the same hue family as
+ * the brand's `1mili-green` (#28962a), just at full voltage.
+ *
+ * Written in oklch because that is what the shadcn tokens use; the hex each one
+ * was converted from is kept in a comment so the sampling can be re-checked.
+ * Every foreground/surface pair here clears WCAG AA (the weakest, muted text on
+ * `--accent`, is 5.4:1).
+ *
+ * The app is dark-only (`forcedTheme="dark"`), so `:root` and `.dark` carry the
+ * same values — one palette, no light-mode leak through a component that paints
+ * with a bare token, and shadcn's `dark:` variants still resolve because the
+ * class is on <html> regardless.
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-display), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Brand accents beyond the shadcn set — see the palette note above. */
+  --color-brand-lime: var(--brand-lime);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-gold: var(--brand-gold);
+  /* Semantic aliases, so "a market is live" and "a bet won" can never drift
+     into the same colour the way they did when both were `--primary`. */
+  --color-live: var(--live);
+  --color-win: var(--win);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root,
+.dark {
+  --background: oklch(0.1566 0.0175 174.55); /* #050f0c */
+  --foreground: oklch(0.9598 0.0143 169.24); /* #e9f5f0 */
+  --card: oklch(0.2027 0.0223 174.99); /* #0b1a16 */
+  --card-foreground: oklch(0.9598 0.0143 169.24);
+  --popover: oklch(0.2296 0.027 174.87); /* #0e211c */
+  --popover-foreground: oklch(0.9598 0.0143 169.24);
+
+  --primary: oklch(0.804 0.2735 142.51); /* #00e701 */
+  --primary-foreground: oklch(0.1654 0.0274 158.94); /* #04120a */
+  --secondary: oklch(0.2579 0.0279 176.2); /* #142823 */
+  --secondary-foreground: oklch(0.9598 0.0143 169.24);
+  --muted: oklch(0.2579 0.0279 176.2);
+  --muted-foreground: oklch(0.7119 0.0321 175.51); /* #8ea9a1 */
+  --accent: oklch(0.2982 0.0339 173.95); /* #1a332c */
+  --accent-foreground: oklch(0.9598 0.0143 169.24);
+  --destructive: oklch(0.6665 0.2218 32.2); /* #ff4a2b */
+
+  --brand-lime: oklch(0.8422 0.1795 107.24); /* #d9d20a — the logotype */
+  --brand-cyan: oklch(0.8227 0.1356 199.01); /* #22dfe6 — the HUD frame */
+  --brand-gold: oklch(0.8174 0.1587 82.72); /* #f5b829 — the WINNER plate */
+  --live: var(--brand-cyan);
+  --win: var(--primary);
+
+  /* Hairlines are the foreground at low alpha, not a flat grey, so they stay
+     hairlines against both the page and the lighter cards. */
+  --border: oklch(0.9598 0.0143 169.24 / 11%);
+  --input: oklch(0.9598 0.0143 169.24 / 16%);
+  /* Full strength: the app focus-rings with `ring-ring/50`, which is where the
+     alpha comes from. Baking it in here would halve it twice. */
+  --ring: oklch(0.804 0.2735 142.51);
+
+  --chart-1: oklch(0.804 0.2735 142.51);
+  --chart-2: oklch(0.8227 0.1356 199.01);
+  --chart-3: oklch(0.8422 0.1795 107.24);
+  --chart-4: oklch(0.8174 0.1587 82.72);
+  --chart-5: oklch(0.6665 0.2218 32.2);
+
+  --radius: 0.625rem;
+
+  /* The nav chrome sits *below* the page, not above it — the content column is
+     the lit surface and the rails frame it. */
+  --sidebar: oklch(0.1345 0.0152 177.71); /* #030a08 */
+  --sidebar-foreground: oklch(0.9598 0.0143 169.24);
+  --sidebar-primary: oklch(0.804 0.2735 142.51);
+  --sidebar-primary-foreground: oklch(0.1654 0.0274 158.94);
+  --sidebar-accent: oklch(0.2579 0.0279 176.2);
+  --sidebar-accent-foreground: oklch(0.9598 0.0143 169.24);
+  --sidebar-border: oklch(0.9598 0.0143 169.24 / 11%);
+  --sidebar-ring: oklch(0.804 0.2735 142.51);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    background-color: var(--background);
+    scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+
+  body {
+    @apply text-foreground bg-transparent;
+    /* A stray wide child must not turn the whole page into a sideways scroll
+       on a 360px phone (7.4); wide tables scroll inside their own card. */
+    overflow-x: clip;
+  }
+
+  /*
+   * Ambient light from the top of the key art, so the page isn't a flat black
+   * rectangle. A fixed pseudo-element rather than `background-attachment: fixed`
+   * on <html>: iOS Safari ignores that keyword, and where it is honoured it
+   * repaints the gradient on every scroll frame. This composites once.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(
+        70rem 40rem at 50% -12rem,
+        color-mix(in oklch, var(--brand-cyan) 9%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        50rem 30rem at 100% 0,
+        color-mix(in oklch, var(--primary) 5%, transparent),
+        transparent 70%
+      );
+  }
+
+  /*
+   * The brand's marble, under the gradients above (8.4). The delivery has it in
+   * both polarities; this is the dark one, because the app has no light theme
+   * for the white one to belong to.
+   *
+   * A second layer rather than a third `background-image` on ::before, so the
+   * texture can be sized and dimmed on its own: `cover` on a 1200² tile plus 6%
+   * opacity is a grain the page sits on, not a picture anyone is meant to look
+   * at. Both layers are fixed, so scrolling still composites rather than paints.
+   */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("/bg-marble.webp");
+    background-size: cover;
+    background-position: center;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklch, var(--primary) 30%, transparent);
+    color: var(--foreground);
+  }
+
+  /* Chromium ignores `scrollbar-width` inside overflow containers on desktop. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--foreground) 16%, transparent);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--foreground) 26%, transparent);
+  }
+}
+
+/**
+ * The logotype's yellow-lime → green gradient, for the wordmark and the
+ * celebration headline. One utility rather than a repeated three-class incant.
+ */
+@utility text-brand-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--brand-lime) 0%,
+    var(--primary) 55%,
+    color-mix(in oklch, var(--primary) 70%, var(--brand-cyan)) 100%
+  );
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/** The neon edge on a live control: a hard rim plus a soft bloom behind it. */
+@utility glow-primary {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--primary) 55%, transparent),
+    0 0 20px -6px color-mix(in oklch, var(--primary) 80%, transparent);
+}
+
+@utility glow-primary-lg {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--primary) 60%, transparent),
+    0 6px 30px -6px color-mix(in oklch, var(--primary) 60%, transparent);
+}
+
+/**
+ * The 44px floor for anything a thumb has to hit (Phase 7.4).
+ *
+ * Two conditions, because neither alone is the question being asked. A coarse
+ * pointer means a finger regardless of screen size (a tablet, a phone in
+ * landscape); a phone-width viewport is the layout this product was designed
+ * at. `min-*` beats the `h-*`/`size-*` a component already sets, so applying
+ * this leaves the desktop density alone and only ever grows a control.
+ */
+@utility touch-target {
+  @media (pointer: coarse), (width < 40rem) {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+
+/**
+ * Diagonal hatching for a suspended price — the state has to read as "not
+ * available" without relying on colour alone, which greying it out does not.
+ */
+@utility hatched {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklch, var(--foreground) 6%, transparent) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+/* Coin totals ticking up (7.5), the slip trigger arriving, a win landing. */
+@keyframes coin-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slip-in {
+  0% {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.9);
+  }
+  60% {
+    transform: translateY(0) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes win-flare {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spark-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--spark-x, 0), -7rem, 0) scale(1);
+  }
+}
+
+@utility animate-coin-pop {
+  animation: coin-pop 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-slip-in {
+  animation: slip-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-win-flare {
+  animation: win-flare 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-spark {
+  animation: spark-rise 1400ms ease-out forwards;
+}
+
+/* Anyone who has asked the OS to calm things down gets the end state, not the
+   journey — the celebration still appears, it just doesn't fly in. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-coin-pop,
+  .animate-slip-in,
+  .animate-win-flare,
+  .animate-ping,
+  .animate-spark {
+    animation: none !important;
+  }
+}
