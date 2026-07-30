@@ -42,6 +42,7 @@ export function ImageUploadField({
   error,
   hint,
   placeholder,
+  onValueChange,
 }: {
   label: string;
   name: string;
@@ -50,15 +51,27 @@ export function ImageUploadField({
   error?: string;
   hint?: string;
   placeholder?: string;
+  /**
+   * Notified whenever the stored reference changes. Forms don't need it — the
+   * hidden input below posts for them — but a caller outside a server action,
+   * like the in-place "add a competitor" dialog, has no FormData to read and
+   * needs the value in its own state.
+   */
+  onValueChange?: (value: string) => void;
 }) {
   const preset = UPLOAD_PRESETS[presetId];
 
-  const [value, setValue] = useState(defaultValue ?? "");
+  const [value, setValueState] = useState(defaultValue ?? "");
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const target = cloudStorageEnabled ? preset.source : preset.delivery;
+
+  function setValue(next: string) {
+    setValueState(next);
+    onValueChange?.(next);
+  }
 
   async function handleFile(file: File | undefined) {
     if (!file) return;

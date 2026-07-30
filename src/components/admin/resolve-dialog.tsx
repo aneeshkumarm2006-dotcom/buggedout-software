@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ACTIONS } from "@/lib/admin/wording";
 import { formatCoins, formatRatio } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,7 @@ export function ResolveDialog({
   questionId,
   questionText,
   options,
-  triggerLabel = "Resolve",
+  triggerLabel = ACTIONS.resolve.short,
   triggerVariant = "default",
   triggerSize = "sm",
 }: {
@@ -113,7 +114,7 @@ export function ResolveDialog({
 
   function confirm() {
     if (winners.length === 0) {
-      setError("Tick at least one winning option.");
+      setError("Tick what actually happened first.");
       return;
     }
 
@@ -131,13 +132,13 @@ export function ResolveDialog({
 
       toast.success(
         paid > 0
-          ? `Settled — ${paid} winning bet${paid === 1 ? "" : "s"} paid ${formatCoins(totalPayout)} coins.`
-          : "Settled. No bets were on the winning side.",
+          ? `Done — ${paid} winning bet${paid === 1 ? "" : "s"} paid out ${formatCoins(totalPayout)} coins.`
+          : "Done. Nobody had bet on that outcome, so there was nothing to pay.",
       );
 
       if (failed > 0) {
         toast.error(
-          `${failed} payout${failed === 1 ? "" : "s"} could not be completed. Resolve again to finish them.`,
+          `${failed} player${failed === 1 ? "" : "s"} couldn't be paid. Enter the same result again to finish paying them — nobody gets paid twice.`,
         );
       }
 
@@ -166,8 +167,14 @@ export function ResolveDialog({
 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Resolve market</DialogTitle>
-          <DialogDescription>{questionText}</DialogDescription>
+          <DialogTitle>What actually happened?</DialogTitle>
+          <DialogDescription>
+            {questionText}
+            <span className="mt-1.5 block">
+              Tick every answer that came true. Everyone who picked it gets paid; everyone else
+              doesn&apos;t. You&apos;ll see the exact cost before you confirm.
+            </span>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-2">
@@ -204,7 +211,7 @@ export function ResolveDialog({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{option.name}</span>
                   <span className="text-muted-foreground block text-xs tabular-nums">
-                    {formatRatio(option.ratio)} ·{" "}
+                    ×{formatRatio(option.ratio)} ·{" "}
                     {loading
                       ? "…"
                       : `${stats?.bets ?? 0} bet${(stats?.bets ?? 0) === 1 ? "" : "s"}, ${formatCoins(stats?.stake ?? 0)} staked`}
@@ -217,7 +224,7 @@ export function ResolveDialog({
                     selected ? "text-primary font-medium" : "text-muted-foreground",
                   )}
                 >
-                  {loading ? "" : `pays ${formatCoins(stats?.payout ?? 0)}`}
+                  {loading ? "" : `costs ${formatCoins(stats?.payout ?? 0)}`}
                 </span>
               </button>
             );
@@ -228,27 +235,27 @@ export function ResolveDialog({
           {loading ? (
             <span className="text-muted-foreground flex items-center gap-2">
               <Loader2Icon className="size-3.5 animate-spin" />
-              Working out the impact…
+              Working out what this will cost…
             </span>
           ) : (
             <>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Open bets</span>
+                <span className="text-muted-foreground">Bets waiting</span>
                 <span className="tabular-nums">
                   {formatCoins(preview?.pendingBets ?? 0)} from{" "}
-                  {formatCoins(preview?.uniqueBettors ?? 0)} user
+                  {formatCoins(preview?.uniqueBettors ?? 0)} player
                   {(preview?.uniqueBettors ?? 0) === 1 ? "" : "s"}
                 </span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Staked</span>
+                <span className="text-muted-foreground">Coins staked</span>
                 <span className="tabular-nums">{formatCoins(preview?.totalStake ?? 0)}</span>
               </div>
 
               <div className="flex justify-between font-medium">
-                <span>Pays out</span>
-                <span className="text-primary tabular-nums">{formatCoins(totalPayout)}</span>
+                <span>Will pay out</span>
+                <span className="text-primary tabular-nums">{formatCoins(totalPayout)} coins</span>
               </div>
             </>
           )}
@@ -273,7 +280,11 @@ export function ResolveDialog({
 
           <Button type="button" size="lg" disabled={pending || loading} onClick={confirm}>
             {pending ? <Loader2Icon className="animate-spin" /> : null}
-            {pending ? "Settling…" : "Settle and pay out"}
+            {pending
+              ? "Paying everyone…"
+              : totalPayout > 0
+                ? `Confirm — pay out ${formatCoins(totalPayout)}`
+                : "Confirm result"}
           </Button>
         </DialogFooter>
       </DialogContent>

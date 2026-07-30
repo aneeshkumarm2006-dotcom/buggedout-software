@@ -14,7 +14,7 @@ export default async function NewCategoryPage() {
     <div className="space-y-5">
       <PageHeader
         title="New game"
-        description="One of the ten games. Its templates become the markets on every match you build for it."
+        description="A kind of event. The ready-made questions you set up here are offered every time you build an event for it."
         backHref="/admin/categories"
         backLabel="Games"
       />

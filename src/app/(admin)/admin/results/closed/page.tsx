@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ListToolbar } from "@/components/admin/list-toolbar";
+import { PlainQuestionStatus } from "@/components/admin/plain-status";
 import {
   Table,
   TableBody,
@@ -15,7 +16,6 @@ import {
 import { LocalTime } from "@/components/common/local-time";
 import { PageHeader } from "@/components/common/page-header";
 import { PaginationNav } from "@/components/common/pagination-nav";
-import { QuestionStatusBadge } from "@/components/common/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { listCategoryOptions } from "@/lib/admin/categories";
 import { requireAdminPage } from "@/lib/admin/guard";
@@ -30,7 +30,7 @@ import {
 import { listClosedResults } from "@/lib/admin/results";
 import { formatCoins } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Closed results" };
+export const metadata: Metadata = { title: "Past results" };
 
 const PATH = "/admin/results/closed";
 
@@ -64,8 +64,8 @@ export default async function ClosedResultsPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Closed results"
-        description="Every market that has been settled or voided, newest first."
+        title="Past results"
+        description="Every question that has been decided or refunded, newest first — what was decided, what it paid, and who did it."
       />
 
       <ListToolbar
@@ -85,8 +85,8 @@ export default async function ClosedResultsPage({
             label: "Outcome",
             value: status,
             options: [
-              { value: "resolved", label: "Resolved" },
-              { value: "void", label: "Voided" },
+              { value: "resolved", label: "Result entered" },
+              { value: "void", label: "Cancelled & refunded" },
             ],
           },
         ]}
@@ -96,13 +96,13 @@ export default async function ClosedResultsPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Market</TableHead>
+              <TableHead className="pl-4">Question</TableHead>
               <TableHead>Outcome</TableHead>
               <TableHead>Winner</TableHead>
               <TableHead className="text-right">Bets</TableHead>
               <TableHead className="text-right">Staked</TableHead>
               <TableHead className="text-right">Paid out</TableHead>
-              <TableHead>Settled by</TableHead>
+              <TableHead>Decided by</TableHead>
               <TableHead className="pr-4 text-right">When</TableHead>
             </TableRow>
           </TableHeader>
@@ -112,7 +112,7 @@ export default async function ClosedResultsPage({
               <TableEmptyRow colSpan={8}>
                 {q || categoryId || status
                   ? "No results match those filters."
-                  : "Nothing has been settled yet."}
+                  : "No results have been entered yet."}
               </TableEmptyRow>
             ) : (
               closed.rows.map((result) => (
@@ -132,7 +132,7 @@ export default async function ClosedResultsPage({
                   </TableCell>
 
                   <TableCell>
-                    <QuestionStatusBadge status={result.status} />
+                    <PlainQuestionStatus status={result.status} />
                   </TableCell>
 
                   <TableCell>

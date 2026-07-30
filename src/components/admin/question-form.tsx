@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { MarketTemplateOption, QuestionDetail } from "@/lib/admin/questions";
+import { PAYOUT_PRESETS, payoutExample, payoutFeel } from "@/lib/admin/wording";
 import {
   EDITABLE_QUESTION_STATUSES,
   MAX_OPTIONS_PER_QUESTION,
@@ -26,12 +27,19 @@ import { fieldError, idleFormState, type FormState } from "@/lib/form";
 import { cn } from "@/lib/utils";
 
 /**
- * The question editor (Phase 6.8) — the market itself and its odds buttons.
+ * The question editor (Phase 6.8) — the question itself and the answers players
+ * tap.
  *
  * An option row that came from the database keeps its `_id`, and that is the
  * whole point: a Bet snapshots `optionId` at placement, so an edit has to move
  * the *same* option rather than swap in a new one. Rows without an id are
  * genuinely new. The server refuses to drop a row that has bets on it.
+ *
+ * The odds column is the one thing on this screen that used to require training.
+ * `2.5` is not a quantity of anything a person handles, so every row now prints
+ * what it means in coins — "bet 100 → get back 250" — and the presets set a
+ * whole question's prices at once. The stored value is unchanged; only the way
+ * it is asked for is.
  */
 type OptionDraft = {
   id?: string;
@@ -43,7 +51,7 @@ type OptionDraft = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  active: "Open — taking bets",
+  active: "Taking bets",
   locked: "Closed — no new bets",
 };
 
@@ -99,8 +107,8 @@ export function QuestionForm({
 
       {templates.length > 0 ? (
         <FormCard
-          title="Insert from template"
-          description="The presets set up on this game. Inserting one replaces the question and its options."
+          title="Start from a ready-made question"
+          description="The presets set up on this game. Picking one replaces what's below."
         >
           <div className="flex flex-wrap gap-2">
             {templates.map((template, index) => (
@@ -119,9 +127,9 @@ export function QuestionForm({
         </FormCard>
       ) : null}
 
-      <FormCard title="Market">
+      <FormCard title="The question">
         <TextField
-          label="Question"
+          label="What are players betting on?"
           name="text"
           required
           maxLength={200}
@@ -138,11 +146,11 @@ export function QuestionForm({
             required
             defaultValue={state.values?.endDate ?? question?.endDate ?? ""}
             error={fieldError(state, "endDate")}
-            hint="Locks itself at this time"
+            hint="Closes itself at this time — you don't have to be here"
           />
 
           <SelectField
-            label="Status"
+            label="Right now this question is"
             name="status"
             defaultValue={state.values?.status || question?.status || "active"}
             options={EDITABLE_QUESTION_STATUSES.map((value) => ({
@@ -150,141 +158,181 @@ export function QuestionForm({
               label: STATUS_LABELS[value]!,
             }))}
             error={fieldError(state, "status")}
-            hint="Resolving and voiding happen from Results."
+            hint="Entering the result and refunding both happen from Results to enter."
           />
         </FieldRow>
 
-        <FieldRow>
-          <TextField
-            label="Min stake"
-            name="minStakePerBet"
-            type="number"
-            min={1}
-            step={1}
-            required
-            defaultValue={state.values?.minStakePerBet ?? String(question?.minStakePerBet ?? 10)}
-            error={fieldError(state, "minStakePerBet")}
-          />
+        <details className="group">
+          <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-sm select-none">
+            Bet size limits (most people leave these alone)
+          </summary>
 
-          <TextField
-            label="Max stake"
-            name="maxStakePerBet"
-            type="number"
-            min={1}
-            step={1}
-            required
-            defaultValue={
-              state.values?.maxStakePerBet ?? String(question?.maxStakePerBet ?? 10_000)
-            }
-            error={fieldError(state, "maxStakePerBet")}
-          />
-        </FieldRow>
+          <FieldRow className="pt-3">
+            <TextField
+              label="Smallest bet allowed"
+              name="minStakePerBet"
+              type="number"
+              min={1}
+              step={1}
+              required
+              defaultValue={state.values?.minStakePerBet ?? String(question?.minStakePerBet ?? 10)}
+              error={fieldError(state, "minStakePerBet")}
+              hint="In coins"
+            />
+
+            <TextField
+              label="Biggest bet allowed"
+              name="maxStakePerBet"
+              type="number"
+              min={1}
+              step={1}
+              required
+              defaultValue={
+                state.values?.maxStakePerBet ?? String(question?.maxStakePerBet ?? 10_000)
+              }
+              error={fieldError(state, "maxStakePerBet")}
+              hint="In coins, per bet"
+            />
+          </FieldRow>
+        </details>
       </FormCard>
 
       <FormCard
-        title="Options"
-        description={`${MIN_OPTIONS_PER_QUESTION}–${MAX_OPTIONS_PER_QUESTION} tappable odds buttons. Editing a price only affects bets placed after it — settled bets keep the odds they were given.`}
+        title="Answers players can pick"
+        description={`Between ${MIN_OPTIONS_PER_QUESTION} and ${MAX_OPTIONS_PER_QUESTION}. Changing a payout only affects bets placed afterwards — a bet already placed is paid at the payout it was given.`}
       >
-        <div className="grid gap-2">
-          <div className="text-muted-foreground hidden grid-cols-[1fr_6rem_5.5rem_2.25rem] gap-2 text-xs sm:grid">
-            <span>Name</span>
-            <span>Odds</span>
-            <span>Available</span>
+        <div className="grid gap-3">
+          <div className="text-muted-foreground hidden grid-cols-[1fr_7rem_6rem_2.25rem] gap-2 text-xs sm:grid">
+            <span>Answer</span>
+            <span>Payout</span>
+            <span>Offered?</span>
             <span />
           </div>
 
-          {options.map((option, index) => (
-            <div
-              key={option.id ?? `new-${index}`}
-              className="grid grid-cols-[1fr_auto] items-center gap-2 sm:grid-cols-[1fr_6rem_5.5rem_2.25rem]"
-            >
-              <Input
-                value={option.name}
-                maxLength={80}
-                placeholder={`Option ${index + 1}`}
-                aria-label={`Option ${index + 1} name`}
-                onChange={(event) =>
-                  setOptions((current) =>
-                    current.map((row, i) =>
-                      i === index ? { ...row, name: event.target.value } : row,
-                    ),
-                  )
-                }
-                className="h-11 md:h-10"
-              />
+          {options.map((option, index) => {
+            const ratio = Number(option.ratio);
 
-              <Input
-                type="number"
-                min={1.01}
-                max={1000}
-                step={0.01}
-                value={option.ratio}
-                aria-label={`Option ${index + 1} odds`}
-                onChange={(event) =>
-                  setOptions((current) =>
-                    current.map((row, i) =>
-                      i === index ? { ...row, ratio: event.target.value } : row,
-                    ),
-                  )
-                }
-                className="h-11 w-24 md:h-10"
-              />
+            return (
+              <div key={option.id ?? `new-${index}`} className="space-y-1.5">
+                <div className="grid grid-cols-[1fr_auto] items-center gap-2 sm:grid-cols-[1fr_7rem_6rem_2.25rem]">
+                  <Input
+                    value={option.name}
+                    maxLength={80}
+                    placeholder={`Answer ${index + 1}`}
+                    aria-label={`Answer ${index + 1} name`}
+                    onChange={(event) =>
+                      setOptions((current) =>
+                        current.map((row, i) =>
+                          i === index ? { ...row, name: event.target.value } : row,
+                        ),
+                      )
+                    }
+                    className="h-11 md:h-10"
+                  />
 
-              <label className="col-span-2 flex items-center gap-2 text-sm sm:col-span-1">
-                <Checkbox
-                  checked={option.active}
-                  onCheckedChange={(checked) =>
-                    setOptions((current) =>
-                      current.map((row, i) =>
-                        i === index ? { ...row, active: checked === true } : row,
-                      ),
-                    )
-                  }
-                />
-                <span className="text-muted-foreground">
-                  {option.active ? "Available" : "Suspended"}
-                </span>
-              </label>
+                  <div className="relative">
+                    <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">
+                      ×
+                    </span>
 
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-lg"
-                aria-label={`Remove option ${index + 1}`}
-                disabled={options.length <= MIN_OPTIONS_PER_QUESTION}
-                title={
-                  option.bets > 0
-                    ? `${option.bets} bet${option.bets === 1 ? "" : "s"} on this — suspend it instead`
-                    : undefined
-                }
-                onClick={() => setOptions((current) => current.filter((_, i) => i !== index))}
-              >
-                <Trash2Icon />
-              </Button>
+                    <Input
+                      type="number"
+                      min={1.01}
+                      max={1000}
+                      step={0.05}
+                      value={option.ratio}
+                      aria-label={`Payout for answer ${index + 1}`}
+                      onChange={(event) =>
+                        setOptions((current) =>
+                          current.map((row, i) =>
+                            i === index ? { ...row, ratio: event.target.value } : row,
+                          ),
+                        )
+                      }
+                      className="h-11 w-full pl-6 md:h-10"
+                    />
+                  </div>
 
-              {option.bets > 0 ? (
-                <p className="text-muted-foreground col-span-full -mt-1 text-xs">
-                  {option.bets} bet{option.bets === 1 ? "" : "s"} placed on this option.
+                  <label className="col-span-2 flex items-center gap-2 text-sm sm:col-span-1">
+                    <Checkbox
+                      checked={option.active}
+                      onCheckedChange={(checked) =>
+                        setOptions((current) =>
+                          current.map((row, i) =>
+                            i === index ? { ...row, active: checked === true } : row,
+                          ),
+                        )
+                      }
+                    />
+                    <span className="text-muted-foreground">
+                      {option.active ? "Offered" : "Hidden"}
+                    </span>
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-lg"
+                    aria-label={`Remove answer ${index + 1}`}
+                    disabled={options.length <= MIN_OPTIONS_PER_QUESTION}
+                    title={
+                      option.bets > 0
+                        ? `${option.bets} bet${option.bets === 1 ? "" : "s"} on this — untick "Offered" instead of removing it`
+                        : undefined
+                    }
+                    onClick={() => setOptions((current) => current.filter((_, i) => i !== index))}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </div>
+
+                <p className="text-muted-foreground text-xs">
+                  {payoutExample(ratio)}
+                  {payoutFeel(ratio) ? ` · ${payoutFeel(ratio)}` : ""}
+                  {option.bets > 0
+                    ? ` · ${option.bets} bet${option.bets === 1 ? "" : "s"} already placed on this`
+                    : ""}
                 </p>
-              ) : null}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         <p className={cn("text-xs", optionsError ? "text-destructive" : "text-muted-foreground")}>
-          {optionsError ?? "Names have to be unique within the market."}
+          {optionsError ?? "No two answers on the same question can share a name."}
         </p>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          disabled={options.length >= MAX_OPTIONS_PER_QUESTION}
-          onClick={() => setOptions((current) => [...current, emptyOption()])}
-        >
-          <PlusIcon />
-          Add option
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            disabled={options.length >= MAX_OPTIONS_PER_QUESTION}
+            onClick={() => setOptions((current) => [...current, emptyOption()])}
+          >
+            <PlusIcon />
+            Add answer
+          </Button>
+
+          <span className="text-muted-foreground text-xs">Set every payout at once:</span>
+
+          {PAYOUT_PRESETS.map((preset) => (
+            <Button
+              key={preset.ratio}
+              type="button"
+              variant="ghost"
+              size="sm"
+              title={`${preset.label} — ${payoutExample(preset.ratio)}`}
+              onClick={() =>
+                setOptions((current) =>
+                  current.map((row) => ({ ...row, ratio: String(preset.ratio) })),
+                )
+              }
+            >
+              ×{preset.ratio}
+            </Button>
+          ))}
+        </div>
       </FormCard>
 
       <FormActions pending={pending} submitLabel={submitLabel} cancelHref={questionsHref} />

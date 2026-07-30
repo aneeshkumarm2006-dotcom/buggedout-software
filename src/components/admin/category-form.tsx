@@ -139,8 +139,8 @@ export function CategoryForm({
       </FormCard>
 
       <FormCard
-        title="Market templates"
-        description="Presets an admin can drop onto a match of this game. Copied by value — editing one here never changes a market that already exists."
+        title="Ready-made betting questions"
+        description="Offered whenever somebody builds an event for this game, so the common ones don't have to be typed out every time. They're copied when used — editing one here never changes a question that already exists."
       >
         <input type="hidden" name="marketTemplates" value={serialise(templates)} />
 

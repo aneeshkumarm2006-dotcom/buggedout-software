@@ -27,7 +27,7 @@ import {
 } from "@/lib/admin/list-params";
 import { AUDIT_ENTITY_TYPES, type AuditEntityType } from "@/lib/enums";
 
-export const metadata: Metadata = { title: "Audit log" };
+export const metadata: Metadata = { title: "Activity log" };
 
 const PATH = "/admin/audit";
 
@@ -67,8 +67,8 @@ export default async function AdminAuditPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Audit log"
-        description="Every admin action, in the order it happened. Rows can't be edited or deleted."
+        title="Activity log"
+        description="Everything staff have done here, newest first. Nothing on this page can be edited or deleted — that's the point of it."
       />
 
       <ListToolbar

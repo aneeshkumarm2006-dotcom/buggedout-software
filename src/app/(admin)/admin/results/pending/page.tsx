@@ -4,6 +4,7 @@ import { BanIcon, CheckCheckIcon } from "lucide-react";
 
 import { voidQuestionAction } from "@/app/(admin)/actions";
 import { ConfirmActionButton } from "@/components/admin/action-button";
+import { HelpNote } from "@/components/admin/help-note";
 import { ListToolbar } from "@/components/admin/list-toolbar";
 import { ResolveDialog } from "@/components/admin/resolve-dialog";
 import { TableCard } from "@/components/admin/table-card";
@@ -22,19 +23,20 @@ import {
   type SearchParamsRecord,
 } from "@/lib/admin/list-params";
 import { listPendingResults } from "@/lib/admin/results";
+import { ACTIONS, payoutExample } from "@/lib/admin/wording";
 import { formatCoins, formatRatio } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Pending results" };
+export const metadata: Metadata = { title: "Results to enter" };
 
 const PATH = "/admin/results/pending";
 
 /**
- * Pending results (Phase 6.9) — every market that has stopped taking bets and
+ * Results to enter (Phase 6.9) — every question that has stopped taking bets and
  * is still waiting on an outcome, oldest first, because that is the one keeping
  * someone from their coins.
  *
- * Reading this page also sweeps expired markets into `locked` (4.3), so the
+ * Reading this page also sweeps expired questions into `locked` (4.3), so the
  * queue is never short just because the cron job is late.
  */
 export default async function PendingResultsPage({
@@ -61,9 +63,32 @@ export default async function PendingResultsPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Pending results"
-        description="Markets closed to betting and still waiting on an outcome. Settling pays every winning bet its snapshot odds."
+        title="Results to enter"
+        description="Betting has closed on these and nobody has been paid yet. Oldest first — that's the player who has been waiting longest."
       />
+
+      {pending.rows.length > 0 ? (
+        <HelpNote
+          steps={[
+            <>
+              Press <strong>Enter result</strong> and tick what actually happened.
+            </>,
+            <>
+              The next screen shows you <strong>exactly what it will cost</strong> before you
+              confirm.
+            </>,
+            <>
+              Confirm, and every player who got it right is paid instantly at the payout they were
+              given when they bet.
+            </>,
+          ]}
+        >
+          <p>
+            If the event didn&apos;t happen, use <strong>Cancel &amp; refund</strong> instead —
+            nobody wins or loses and every player gets their coins back.
+          </p>
+        </HelpNote>
+      ) : null}
 
       <ListToolbar
         pathname={PATH}
@@ -83,11 +108,11 @@ export default async function PendingResultsPage({
       {pending.rows.length === 0 ? (
         <EmptyState
           icon={CheckCheckIcon}
-          title={q || categoryId ? "Nothing matches those filters" : "Nothing waiting"}
+          title={q || categoryId ? "Nothing matches those filters" : "Nothing waiting on you"}
           description={
             q || categoryId
               ? "Try clearing the search or the game filter."
-              : "Every closed market has a result. Markets appear here as soon as their betting window ends."
+              : "Every question that has closed has had its result entered. New ones land here on their own, the moment betting closes."
           }
         />
       ) : (
@@ -112,11 +137,11 @@ export default async function PendingResultsPage({
                   <p className="font-medium">{question.text}</p>
 
                   <p className="text-muted-foreground text-xs tabular-nums">
-                    {formatCoins(question.pendingBets)} open bet
+                    {formatCoins(question.uniqueBettors)} player
+                    {question.uniqueBettors === 1 ? "" : "s"} waiting ·{" "}
+                    {formatCoins(question.pendingBets)} bet
                     {question.pendingBets === 1 ? "" : "s"} ·{" "}
-                    {formatCoins(question.totalStake)} staked by{" "}
-                    {formatCoins(question.uniqueBettors)} user
-                    {question.uniqueBettors === 1 ? "" : "s"}
+                    {formatCoins(question.totalStake)} coins staked
                   </p>
                 </div>
 
@@ -130,7 +155,7 @@ export default async function PendingResultsPage({
                         name: option.name,
                         ratio: option.ratio,
                       }))}
-                      triggerLabel="Pick winner"
+                      triggerLabel={ACTIONS.resolve.short}
                       triggerSize="lg"
                     />
                   ) : null}
@@ -138,15 +163,18 @@ export default async function PendingResultsPage({
                   {canVoid ? (
                     <ConfirmActionButton
                       action={voidQuestionAction.bind(null, question.id)}
-                      title="Void this market?"
-                      description={`All ${question.pendingBets} open bet${question.pendingBets === 1 ? "" : "s"} are refunded in full and the market closes with no result.`}
-                      confirmLabel="Void and refund"
-                      reason={{ label: "Reason", placeholder: "Race abandoned…" }}
+                      title="Cancel this question and refund everyone?"
+                      description={`Nobody wins or loses. All ${question.pendingBets} open bet${question.pendingBets === 1 ? "" : "s"} — ${formatCoins(question.totalStake)} coins — go straight back to the players who placed them. This can't be undone.`}
+                      confirmLabel="Cancel & refund"
+                      reason={{
+                        label: "Why? (players don't see this)",
+                        placeholder: "Race abandoned…",
+                      }}
                       variant="outline"
                       size="lg"
                     >
                       <BanIcon />
-                      Void
+                      Cancel &amp; refund
                     </ConfirmActionButton>
                   ) : null}
                 </div>
@@ -157,13 +185,14 @@ export default async function PendingResultsPage({
                   <Badge
                     key={option.id}
                     variant="outline"
+                    title={payoutExample(option.ratio)}
                     className={cn(
                       "h-7 gap-1.5 px-2.5",
                       option.status === "inactive" && "text-muted-foreground line-through",
                     )}
                   >
                     {option.name}
-                    <span className="tabular-nums opacity-70">{formatRatio(option.ratio)}</span>
+                    <span className="tabular-nums opacity-70">×{formatRatio(option.ratio)}</span>
                   </Badge>
                 ))}
               </div>
@@ -176,7 +205,7 @@ export default async function PendingResultsPage({
         page={pending.page}
         totalPages={pending.totalPages}
         totalItems={pending.total}
-        itemLabel="markets"
+        itemLabel="waiting"
         buildHref={(pageNumber) => buildAdminHref(PATH, { ...query, page: pageNumber })}
       />
     </div>

@@ -31,7 +31,7 @@ import { USER_STATUSES, type UserStatus } from "@/lib/enums";
 import { formatCoins } from "@/lib/format";
 import { ROLES, type Role } from "@/lib/roles";
 
-export const metadata: Metadata = { title: "Users" };
+export const metadata: Metadata = { title: "Players" };
 
 const PATH = "/admin/users";
 

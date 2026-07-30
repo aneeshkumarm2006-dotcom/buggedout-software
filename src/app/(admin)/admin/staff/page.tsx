@@ -61,7 +61,7 @@ export default async function AdminStaffPage({
     <div className="space-y-5">
       <PageHeader
         title="Staff"
-        description="Admin access is a permission matrix, checked on every request — not a role name."
+        description="Who can get into this panel, and what each of them is allowed to do. Everything is checked again on every single request, so removing access takes effect immediately."
         action={
           canManage ? (
             <Button asChild size="lg">

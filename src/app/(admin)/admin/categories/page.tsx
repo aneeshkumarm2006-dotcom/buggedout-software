@@ -59,7 +59,7 @@ export default async function AdminCategoriesPage({
     <div className="space-y-5">
       <PageHeader
         title="Games"
-        description="Each game is a category: its card, its lobby order and the market templates behind its matches."
+        description="The kinds of event you run. Each one has its artwork, where it sits in the lobby, and the ready-made betting questions offered when you build an event for it."
         action={
           canManage ? (
             <Button asChild size="lg">

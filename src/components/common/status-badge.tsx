@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * Set small, uppercase and letterspaced — chips are labels, not sentences, and
  * at 10px that reads as deliberate rather than as shrunken body text.
  */
-type Tone = "win" | "live" | "gold" | "neutral" | "muted" | "danger";
+export type Tone = "win" | "live" | "gold" | "neutral" | "muted" | "danger";
 
 const TONE_CLASS: Record<Tone, string> = {
   win: "bg-win/12 text-win ring-win/25",
@@ -25,7 +25,13 @@ const TONE_CLASS: Record<Tone, string> = {
   danger: "bg-destructive/12 text-destructive ring-destructive/25",
 };
 
-function StatusChip({
+/**
+ * Exported so the admin panel can print the same chip with its own, plainer
+ * wording (`components/admin/plain-status.tsx`) without the two drifting apart
+ * on colour. The labels below stay as they are — they are what the *player*
+ * site says, where betting language is the language people expect.
+ */
+export function StatusChip({
   tone,
   children,
   pulse,

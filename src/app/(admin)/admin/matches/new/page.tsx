@@ -8,7 +8,7 @@ import { requireAdminPage } from "@/lib/admin/guard";
 import { listTeamOptions } from "@/lib/admin/teams";
 import { listTournamentOptions } from "@/lib/admin/tournaments";
 
-export const metadata: Metadata = { title: "New match" };
+export const metadata: Metadata = { title: "New event" };
 
 export default async function NewMatchPage() {
   await requireAdminPage("matches.manage", { fallback: "/admin/matches" });
@@ -22,10 +22,10 @@ export default async function NewMatchPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="New match"
-        description="Pick a game, then the teams and the start time. Markets come next."
+        title="New event"
+        description="The blank form — one screen, no guidance. If you'd rather be walked through it, use Set up an event."
         backHref="/admin/matches"
-        backLabel="Matches"
+        backLabel="All events"
       />
 
       <MatchForm
@@ -33,7 +33,7 @@ export default async function NewMatchPage() {
         categories={categories}
         tournaments={tournaments}
         teams={teams}
-        submitLabel="Create match"
+        submitLabel="Create event"
       />
     </div>
   );

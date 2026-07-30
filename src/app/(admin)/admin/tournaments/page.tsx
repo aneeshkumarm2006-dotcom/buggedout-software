@@ -33,7 +33,7 @@ import {
 import { listTournaments } from "@/lib/admin/tournaments";
 import { TOURNAMENT_STATUSES, type TournamentStatus } from "@/lib/enums";
 
-export const metadata: Metadata = { title: "Tournaments" };
+export const metadata: Metadata = { title: "Series" };
 
 const PATH = "/admin/tournaments";
 

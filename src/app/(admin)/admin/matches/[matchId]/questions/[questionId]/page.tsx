@@ -9,7 +9,7 @@ import { requireAdminPage } from "@/lib/admin/guard";
 import { getMatchHeader } from "@/lib/admin/matches";
 import { getMatchTemplates, getQuestion } from "@/lib/admin/questions";
 
-export const metadata: Metadata = { title: "Edit market" };
+export const metadata: Metadata = { title: "Edit question" };
 
 export default async function EditQuestionPage({
   params,
@@ -33,10 +33,10 @@ export default async function EditQuestionPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Edit market"
+        title="Edit betting question"
         description={match.title}
         backHref={`/admin/matches/${matchId}/questions`}
-        backLabel="Markets"
+        backLabel="Betting questions"
       />
 
       {question.locked ? (
@@ -46,8 +46,8 @@ export default async function EditQuestionPage({
           title={question.status === "resolved" ? "Already resolved" : "Already voided"}
           description={
             question.status === "resolved"
-              ? "This market has been settled and paid out, so it can no longer be edited."
-              : "This market was voided and every stake refunded, so it can no longer be edited."
+              ? "The result is in and everyone has been paid, so this question can't be changed."
+              : "This question was cancelled and everyone refunded, so it can't be changed."
           }
         />
       ) : (
@@ -56,7 +56,7 @@ export default async function EditQuestionPage({
           question={question}
           templates={templates}
           matchId={matchId}
-          submitLabel="Save market"
+          submitLabel="Save question"
         />
       )}
     </div>

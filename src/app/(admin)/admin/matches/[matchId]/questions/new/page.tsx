@@ -8,7 +8,7 @@ import { requireAdminPage } from "@/lib/admin/guard";
 import { getMatchHeader } from "@/lib/admin/matches";
 import { getMatchTemplates } from "@/lib/admin/questions";
 
-export const metadata: Metadata = { title: "New market" };
+export const metadata: Metadata = { title: "New question" };
 
 export default async function NewQuestionPage({
   params,
@@ -31,17 +31,17 @@ export default async function NewQuestionPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="New market"
+        title="New betting question"
         description={match.title}
         backHref={`/admin/matches/${matchId}/questions`}
-        backLabel="Markets"
+        backLabel="Betting questions"
       />
 
       <QuestionForm
         action={createQuestionAction.bind(null, matchId)}
         templates={templates}
         matchId={matchId}
-        submitLabel="Create market"
+        submitLabel="Create question"
       />
     </div>
   );

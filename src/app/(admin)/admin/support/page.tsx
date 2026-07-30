@@ -21,7 +21,7 @@ import { listTickets } from "@/lib/admin/support";
 import { SUPPORT_TICKET_STATUSES, type SupportTicketStatus } from "@/lib/enums";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Support" };
+export const metadata: Metadata = { title: "Player messages" };
 
 const PATH = "/admin/support";
 
@@ -66,8 +66,8 @@ export default async function AdminSupportPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Support"
-        description="Open and replied tickets are waiting on you. Answering moves a ticket back to the user."
+        title="Player messages"
+        description="Anything under Open or Waiting on you needs a reply. Once you answer, it moves back to the player."
       />
 
       <SegmentedNav

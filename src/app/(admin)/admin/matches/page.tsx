@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BanIcon, ListChecksIcon, LockIcon, PencilIcon, PlusIcon, Trash2Icon, UnlockIcon } from "lucide-react";
+import {
+  BanIcon,
+  ListChecksIcon,
+  LockIcon,
+  PencilIcon,
+  PlusIcon,
+  SparklesIcon,
+  Trash2Icon,
+  UnlockIcon,
+} from "lucide-react";
 
 import { cancelMatchAction } from "@/app/(admin)/actions";
 import { deleteMatchAction, setMatchStatusAction } from "@/app/(admin)/catalog-actions";
 import { ActionButton, ConfirmActionButton } from "@/components/admin/action-button";
 import { FlashToast } from "@/components/admin/flash-toast";
 import { ListToolbar } from "@/components/admin/list-toolbar";
+import { PlainMatchStatus } from "@/components/admin/plain-status";
 import {
   Table,
   TableBody,
@@ -21,7 +31,6 @@ import { AssetImage } from "@/components/common/asset-image";
 import { LocalTime } from "@/components/common/local-time";
 import { PageHeader } from "@/components/common/page-header";
 import { PaginationNav } from "@/components/common/pagination-nav";
-import { MatchStatusBadge } from "@/components/common/status-badge";
 import { Button } from "@/components/ui/button";
 import { listCategoryOptions } from "@/lib/admin/categories";
 import { actorCan, requireAdminPage } from "@/lib/admin/guard";
@@ -36,18 +45,20 @@ import {
 } from "@/lib/admin/list-params";
 import { listMatches } from "@/lib/admin/matches";
 import { listTournamentOptions } from "@/lib/admin/tournaments";
+import { ACTIONS, MATCH_STATUS_WORDING } from "@/lib/admin/wording";
 import { MATCH_STATUSES, TEAM_IMAGE_SIZE, type MatchStatus } from "@/lib/enums";
 
-export const metadata: Metadata = { title: "Matches" };
+export const metadata: Metadata = { title: "Events" };
 
 const PATH = "/admin/matches";
 
 /**
- * Matches (Phase 6.7).
+ * Events (Phase 6.7).
  *
- * The row actions are the day-to-day ones: lock a match the moment the animals
- * are off, open its market list, or cancel it — which is the only path that
- * refunds, and is deliberately not reachable from the status dropdown.
+ * The row actions are the day-to-day ones: stop taking bets the moment the
+ * animals are off, open the event's betting questions, or call it off — which
+ * is the only path that refunds, and is deliberately not reachable from the
+ * status dropdown.
  */
 export default async function AdminMatchesPage({
   searchParams,
@@ -79,16 +90,25 @@ export default async function AdminMatchesPage({
       <FlashToast message={parseFlash(params.flash)} />
 
       <PageHeader
-        title="Matches"
-        description="Every event users can bet on. Open a match's markets from Questions."
+        title="Events"
+        description="Everything players can bet on. Open an event to see its betting questions."
         action={
           canManage ? (
-            <Button asChild size="lg">
-              <Link href={`${PATH}/new`}>
-                <PlusIcon />
-                New match
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="lg">
+                <Link href="/admin/create">
+                  <SparklesIcon />
+                  Set up an event
+                </Link>
+              </Button>
+
+              <Button asChild variant="outline" size="lg">
+                <Link href={`${PATH}/new`}>
+                  <PlusIcon />
+                  Blank form
+                </Link>
+              </Button>
+            </div>
           ) : null
         }
       />
@@ -120,7 +140,7 @@ export default async function AdminMatchesPage({
             value: status,
             options: MATCH_STATUSES.map((value) => ({
               value,
-              label: value[0]!.toUpperCase() + value.slice(1),
+              label: MATCH_STATUS_WORDING[value].label,
             })),
           },
         ]}
@@ -130,11 +150,11 @@ export default async function AdminMatchesPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="pl-4">Match</TableHead>
-              <TableHead>Teams</TableHead>
+              <TableHead className="pl-4">Event</TableHead>
+              <TableHead>Competitors</TableHead>
               <TableHead>Starts</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Markets</TableHead>
+              <TableHead>Right now</TableHead>
+              <TableHead className="text-right">Questions</TableHead>
               <TableHead className="pr-4 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -143,8 +163,8 @@ export default async function AdminMatchesPage({
             {matches.rows.length === 0 ? (
               <TableEmptyRow colSpan={6}>
                 {q || status || categoryId || tournamentId
-                  ? "No matches fit those filters."
-                  : "No matches yet."}
+                  ? "Nothing fits those filters."
+                  : "No events yet. Use “Set up an event” to build your first one."}
               </TableEmptyRow>
             ) : (
               matches.rows.map((match) => (
@@ -177,14 +197,23 @@ export default async function AdminMatchesPage({
                   </TableCell>
 
                   <TableCell>
-                    <MatchStatusBadge status={match.status} />
+                    <PlainMatchStatus status={match.status} />
                   </TableCell>
 
                   <TableCell className="text-right tabular-nums">
-                    {match.questionCount}
-                    {match.openQuestionCount > 0 ? (
-                      <span className="text-muted-foreground text-xs"> · {match.openQuestionCount} open</span>
-                    ) : null}
+                    {match.questionCount === 0 ? (
+                      <span className="text-brand-gold text-xs">None — nobody can bet</span>
+                    ) : (
+                      <>
+                        {match.questionCount}
+                        {match.openQuestionCount > 0 ? (
+                          <span className="text-muted-foreground text-xs">
+                            {" "}
+                            · {match.openQuestionCount} open
+                          </span>
+                        ) : null}
+                      </>
+                    )}
                   </TableCell>
 
                   <TableCell className="pr-4">
@@ -207,17 +236,21 @@ export default async function AdminMatchesPage({
                           )}
                           variant="ghost"
                           size="icon-sm"
-                          title={match.status === "locked" ? "Reopen betting" : "Lock betting"}
+                          title={
+                            match.status === "locked" ? ACTIONS.unlock.label : ACTIONS.lock.label
+                          }
                         >
                           {match.status === "locked" ? <UnlockIcon /> : <LockIcon />}
                           <span className="sr-only">
-                            {match.status === "locked" ? "Reopen" : "Lock"} {match.title}
+                            {match.status === "locked" ? ACTIONS.unlock.label : ACTIONS.lock.label}
+                            {": "}
+                            {match.title}
                           </span>
                         </ActionButton>
                       ) : null}
 
                       {canManage ? (
-                        <Button asChild variant="ghost" size="icon-sm" title="Edit match">
+                        <Button asChild variant="ghost" size="icon-sm" title="Edit this event">
                           <Link href={`${PATH}/${match.id}`}>
                             <PencilIcon />
                             <span className="sr-only">Edit {match.title}</span>
@@ -228,15 +261,18 @@ export default async function AdminMatchesPage({
                       {canVoid && match.status !== "cancelled" ? (
                         <ConfirmActionButton
                           action={cancelMatchAction.bind(null, match.id)}
-                          title={`Cancel ${match.title}?`}
-                          description="Every unresolved market on this match is voided and every stake refunded. Markets already resolved keep their payouts."
-                          confirmLabel="Cancel and refund"
-                          reason={{ label: "Reason", placeholder: "Event abandoned…" }}
+                          title={`Call off ${match.title}?`}
+                          description={ACTIONS.cancelMatch.explains}
+                          confirmLabel="Call it off & refund"
+                          reason={{
+                            label: "Why? (players don't see this)",
+                            placeholder: "Event abandoned…",
+                          }}
                           variant="ghost"
                           size="icon-sm"
                         >
                           <BanIcon />
-                          <span className="sr-only">Cancel {match.title}</span>
+                          <span className="sr-only">Call off {match.title}</span>
                         </ConfirmActionButton>
                       ) : null}
 
@@ -244,8 +280,8 @@ export default async function AdminMatchesPage({
                         <ConfirmActionButton
                           action={deleteMatchAction.bind(null, match.id)}
                           title={`Delete ${match.title}?`}
-                          description="Deletes the match and its markets. Only possible while nothing has been staked on it — otherwise cancel it, which refunds."
-                          confirmLabel="Delete match"
+                          description="Removes the event and its questions as if they never existed. Only possible while nobody has bet on it — otherwise call it off, which refunds everybody and keeps the record."
+                          confirmLabel="Delete it"
                           variant="ghost"
                           size="icon-sm"
                         >
@@ -266,7 +302,7 @@ export default async function AdminMatchesPage({
         page={matches.page}
         totalPages={matches.totalPages}
         totalItems={matches.total}
-        itemLabel="matches"
+        itemLabel="events"
         buildHref={(pageNumber) => buildAdminHref(PATH, { ...query, page: pageNumber })}
       />
     </div>

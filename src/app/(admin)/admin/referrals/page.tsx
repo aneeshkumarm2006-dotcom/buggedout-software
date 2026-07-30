@@ -27,7 +27,7 @@ import {
 import { getReferralSettings, listCommissions } from "@/lib/admin/referrals";
 import { formatCoins, formatPercent } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Referrals" };
+export const metadata: Metadata = { title: "Refer a friend" };
 
 const PATH = "/admin/referrals";
 
@@ -60,7 +60,7 @@ export default async function AdminReferralsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Referrals"
+        title="Refer a friend"
         description={
           settings.enabled
             ? `On — ${formatPercent(settings.commissionPercent)} of each settled bet's ${settings.commissionBasis}.`

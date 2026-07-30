@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { requireAdminPage } from "@/lib/admin/guard";
 import { assignableRoles, grantableFor } from "@/lib/admin/users";
 
-export const metadata: Metadata = { title: "Add staff" };
+export const metadata: Metadata = { title: "Add a colleague" };
 
 export default async function NewStaffPage() {
   const actor = await requireAdminPage("staff.manage", { fallback: "/admin/staff" });
@@ -14,8 +14,8 @@ export default async function NewStaffPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Add staff"
-        description="Grant only what the job needs — every permission below unlocks a screen that can change real balances or real access."
+        title="Add a colleague"
+        description="Pick the job that matches what they'll actually be doing. You can always give them more later — start with less."
         backHref="/admin/staff"
         backLabel="Staff"
       />

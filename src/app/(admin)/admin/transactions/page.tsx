@@ -29,7 +29,7 @@ import { TRANSACTION_TYPES, type TransactionType } from "@/lib/enums";
 import { formatCoins, formatSignedCoins } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Transactions" };
+export const metadata: Metadata = { title: "Coin history" };
 
 const PATH = "/admin/transactions";
 

@@ -236,6 +236,102 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
   },
 ];
 
+/**
+ * Named jobs, for people who are hiring rather than configuring.
+ *
+ * Twenty-five checkboxes is the right *model* — access here really is that
+ * granular, and it is re-checked on every request — but it is the wrong first
+ * question to ask somebody adding their first colleague. Nobody thinks "this
+ * person needs `results.resolve` and `results.void`"; they think "this person
+ * enters results".
+ *
+ * So a job is a starting point, not a role: picking one ticks its boxes and
+ * nothing else changes. The matrix is still there, still authoritative, and
+ * still the thing the server reads. `grantablePermissions` still applies — a
+ * job cannot hand out access the granter does not hold, because the form only
+ * ever applies the intersection.
+ */
+export type StaffJob = {
+  key: string;
+  title: string;
+  description: string;
+  permissions: readonly Permission[];
+};
+
+export const STAFF_JOBS: readonly StaffJob[] = [
+  {
+    key: "viewer",
+    title: "Can look, can't touch",
+    description: "Sees the panel and everything in it. Changes nothing. A safe place to start.",
+    permissions: DEFAULT_STAFF_PERMISSIONS,
+  },
+  {
+    key: "builder",
+    title: "Builds events",
+    description:
+      "Sets up games, competitors and events, and writes the betting questions. Can't enter results or touch anyone's coins.",
+    permissions: [
+      "dashboard.view",
+      "categories.view",
+      "categories.manage",
+      "tournaments.view",
+      "tournaments.manage",
+      "teams.view",
+      "teams.manage",
+      "matches.view",
+      "matches.manage",
+      "questions.view",
+      "questions.manage",
+      "results.view",
+      "bets.view",
+    ],
+  },
+  {
+    key: "results",
+    title: "Enters results",
+    description:
+      "Says what happened and pays everybody out, including refunds. This one moves real balances.",
+    permissions: [
+      "dashboard.view",
+      "categories.view",
+      "teams.view",
+      "matches.view",
+      "matches.manage",
+      "questions.view",
+      "questions.manage",
+      "results.view",
+      "results.resolve",
+      "results.void",
+      "bets.view",
+      "transactions.view",
+    ],
+  },
+  {
+    key: "support",
+    title: "Answers players",
+    description:
+      "Reads and replies to player messages, and can look up an account's bets and coin history to answer them.",
+    permissions: [
+      "dashboard.view",
+      "support.view",
+      "support.reply",
+      "users.view",
+      "bets.view",
+      "transactions.view",
+      "matches.view",
+      "questions.view",
+      "results.view",
+    ],
+  },
+  {
+    key: "manager",
+    title: "Runs the whole thing",
+    description:
+      "Everything above, plus bans, manual coin adjustments, the refer-a-friend settings and staff access.",
+    permissions: [...PERMISSIONS],
+  },
+];
+
 /** Permissions a granter may hand out — you cannot give away what you don't hold. */
 export function grantablePermissions(
   role: Role | undefined | null,

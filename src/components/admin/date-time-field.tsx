@@ -25,6 +25,8 @@ export function DateTimeField({
   label,
   name,
   defaultValue,
+  value,
+  onValueChange,
   error,
   hint,
   required,
@@ -35,6 +37,14 @@ export function DateTimeField({
   name: string;
   /** ISO 8601, or empty for a blank field. */
   defaultValue?: string | null;
+  /**
+   * Pass this to drive the field from outside. The forms that post through
+   * `FormData` leave it undefined and let the hidden input below do the work;
+   * the guided builder holds the whole event in its own state and needs the
+   * value back — and needs "in 1 hour" to be able to write into the field.
+   */
+  value?: string | null;
+  onValueChange?: (iso: string) => void;
   error?: string;
   hint?: string;
   required?: boolean;
@@ -42,7 +52,15 @@ export function DateTimeField({
   className?: string;
 }) {
   const hydrated = useHydrated();
-  const [iso, setIso] = useState(defaultValue ?? "");
+  const [internal, setInternal] = useState(defaultValue ?? "");
+
+  const controlled = value !== undefined;
+  const iso = controlled ? (value ?? "") : internal;
+
+  function setIso(next: string) {
+    if (!controlled) setInternal(next);
+    onValueChange?.(next);
+  }
 
   const errorId = `${name}-error`;
   const hintId = `${name}-hint`;

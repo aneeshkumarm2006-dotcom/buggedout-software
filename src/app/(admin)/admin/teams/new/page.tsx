@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { listCategoryOptions } from "@/lib/admin/categories";
 import { requireAdminPage } from "@/lib/admin/guard";
 
-export const metadata: Metadata = { title: "New team" };
+export const metadata: Metadata = { title: "New competitor" };
 
 export default async function NewTeamPage() {
   await requireAdminPage("teams.manage", { fallback: "/admin/teams" });
@@ -16,8 +16,8 @@ export default async function NewTeamPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="New team"
-        description="A competitor in one game — a turtle, a lane, a door."
+        title="New competitor"
+        description="Something players will pick between — a turtle, a lane, a door. Pick which game it belongs to and give it a picture."
         backHref="/admin/teams"
         backLabel="Teams"
       />

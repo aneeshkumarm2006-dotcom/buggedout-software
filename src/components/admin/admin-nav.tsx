@@ -38,14 +38,22 @@ function useVisibleSections(visible: readonly string[]) {
   })).filter((section) => section.items.length > 0);
 }
 
+/**
+ * `withSubtitle` is the drawer's version. On a phone the sidebar is a
+ * deliberate trip somebody takes when they are looking for something, so the
+ * extra line earns its space; in the always-visible desktop rail it would just
+ * be noise beside a label the reader has already learned.
+ */
 function NavLink({
   item,
   pathname,
   onNavigate,
+  withSubtitle,
 }: {
   item: AdminNavItem;
   pathname: string;
   onNavigate?: () => void;
+  withSubtitle?: boolean;
 }) {
   const active = isAdminNavItemActive(item, pathname);
   const Icon = item.icon;
@@ -56,14 +64,23 @@ function NavLink({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+        "flex items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+        withSubtitle ? "py-2" : "h-10",
         active
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
       <Icon className="size-4.5 shrink-0" />
-      <span className="truncate">{item.label}</span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{item.label}</span>
+        {withSubtitle ? (
+          <span className="text-muted-foreground/80 block text-xs font-normal">
+            {item.subtitle}
+          </span>
+        ) : null}
+      </span>
     </Link>
   );
 }
@@ -71,9 +88,11 @@ function NavLink({
 function NavSections({
   visible,
   onNavigate,
+  withSubtitles,
 }: {
   visible: readonly string[];
   onNavigate?: () => void;
+  withSubtitles?: boolean;
 }) {
   const pathname = usePathname();
   const sections = useVisibleSections(visible);
@@ -87,7 +106,13 @@ function NavSections({
           </p>
 
           {section.items.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              onNavigate={onNavigate}
+              withSubtitle={withSubtitles}
+            />
           ))}
         </div>
       ))}
@@ -134,7 +159,7 @@ export function AdminMobileNav({ visible }: { visible: readonly string[] }) {
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
-          <NavSections visible={visible} onNavigate={() => setOpen(false)} />
+          <NavSections visible={visible} onNavigate={() => setOpen(false)} withSubtitles />
         </div>
       </SheetContent>
     </Sheet>

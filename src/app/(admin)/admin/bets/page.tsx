@@ -32,7 +32,7 @@ import { BET_STATUSES, type BetStatus } from "@/lib/enums";
 import { formatCoins, formatRatio, formatSignedCoins } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Bet history" };
+export const metadata: Metadata = { title: "All bets" };
 
 const PATH = "/admin/bets";
 
@@ -40,7 +40,7 @@ const STATUS_LABEL: Record<BetStatus, string> = {
   pending: "Open",
   won: "Won",
   lost: "Lost",
-  void: "Void",
+  void: "Cancelled",
   refunded: "Refunded",
 };
 
@@ -75,8 +75,8 @@ export default async function AdminBetsPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Bet history"
-        description="Every bet on the platform, with the odds each one was actually given."
+        title="All bets"
+        description="Every bet ever placed. The payout shown on a row is the one that bet was given at the time — which is what it gets paid at, whatever the odds say now."
       />
 
       <ListToolbar
@@ -115,7 +115,7 @@ export default async function AdminBetsPage({
           <TableHeader>
             <TableRow>
               <TableHead className="pl-4">User</TableHead>
-              <TableHead>Market</TableHead>
+              <TableHead>Question</TableHead>
               <TableHead>Selection</TableHead>
               <TableHead className="text-right">Stake</TableHead>
               <TableHead className="text-right">To win</TableHead>

@@ -33,7 +33,7 @@ import {
 import { listTeams } from "@/lib/admin/teams";
 import { CONTENT_STATUSES, TEAM_IMAGE_SIZE, type ContentStatus } from "@/lib/enums";
 
-export const metadata: Metadata = { title: "Teams" };
+export const metadata: Metadata = { title: "Competitors" };
 
 const PATH = "/admin/teams";
 
@@ -62,8 +62,8 @@ export default async function AdminTeamsPage({
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Teams"
-        description={`Competitors, one game each. Crests are stored at ${TEAM_IMAGE_SIZE}×${TEAM_IMAGE_SIZE}.`}
+        title="Competitors"
+        description="Whatever players pick between — a turtle, a lane, a door. Each one belongs to a single game and can be used on every event for it."
         action={
           canManage ? (
             <Button asChild size="lg">

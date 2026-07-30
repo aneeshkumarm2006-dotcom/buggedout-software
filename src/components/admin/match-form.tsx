@@ -49,10 +49,10 @@ import { cn } from "@/lib/utils";
 const NO_TOURNAMENT = "__none__";
 
 const STATUS_LABELS: Record<string, string> = {
-  upcoming: "Upcoming — open for betting",
-  live: "Live — running now",
-  locked: "Locked — no new bets",
-  resolved: "Resolved — finished",
+  upcoming: "Scheduled — players can bet",
+  live: "Happening now — players can still bet",
+  locked: "Betting closed — waiting on results",
+  resolved: "Finished — everyone has been paid",
 };
 
 export function MatchForm({
